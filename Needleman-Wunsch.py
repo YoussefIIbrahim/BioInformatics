@@ -1,31 +1,91 @@
-gap_penalty = -1
-match_award = 1
-mismatch_penalty = -1
+import getopt
+import sys
+import getopt
+import argparse
 
-seq1 = "GCATGCU"
-seq2 = "GATTACA"
+GAP_PENALTY = -1
+MATCH = 1
+MISMATCH = -1
+SEQ1 = ''
+SEQ2 = ''
+MAX_PATHS = 10
+MAX_SEQ = 15
+
 seq1List = []
-
 seq2List = []
-
 listOfAlignmentsSeq1 = []
 listOfAlignmentsSeq2 = []
 
 finalList = []
-configList = []
 
 
 def InitScript():
+
+    argv = sys.argv[1:]
+
     try:
-        filepath = 'config.txt'
-        with open(filepath) as fp:
+        # Define the getopt parameters
+        opts, args = getopt.getopt(argv, 'a:b:c:', ['soperand', 'soperand', 'soperand'])
+        # Check if the options' length is 2 (can be enhanced)
+        if len(opts) == 0 or len(opts) > 3:
+            print('usage: Needleman-Wunsch.py -a <config.txt path> -b <sequence1.txt path> -c <sequence2.txt path>')
+
+
+    except getopt.GetoptError:
+        # Print something useful
+        print('usage: Needleman-Wunsch.py -a <config.txt path> -b <sequence1.txt path> -c <sequence2.txt path>')
+        sys.exit(2)
+
+    ap = argparse.ArgumentParser()
+
+    ap.add_argument("-a", "--apath", required=True, help="<config.txt path>, path to config.txt")
+
+    ap.add_argument("-b", "--bpath", required=True,
+                    help="<sequence1.txt path>, path to sequence1.txt")
+
+    ap.add_argument("-c", "--cpath", required=True,
+                    help="<sequence2.txt path>, path to sequence2.txt")
+
+
+    args = vars(ap.parse_args())
+
+    filePath = args['apath']
+    sequence1 = args['bpath']
+    sequence2 = args['cpath']
+
+    GAP_PENALTY, MATCH, MISMATCH, MAX_PATHS, MAX_SEQ = readFile(str(filePath))
+    GAP_PENALTY = int(GAP_PENALTY)
+    MATCH = int(MATCH)
+    MISMATCH = int(MISMATCH)
+    MAX_PATHS = int(MAX_PATHS)
+    MAX_SEQ = int(MAX_SEQ)
+    SEQ1 = readFile(str(sequence1))[0]
+    SEQ2 = readFile(str(sequence2))[0]
+
+    print(SEQ1)
+    print(len(SEQ1) < MAX_SEQ)
+
+    try:
+        assert len(SEQ1) < MAX_SEQ
+    except:
+        print("ERROR: MAX_SEQ in config.txt is smaller than actual sequences.")
+
+    print(needleman_wunsch(SEQ1, SEQ2))
+
+
+def readFile(path):
+    configList = []
+    try:
+        with open(path) as fp:
             line = fp.readline()
             while line:
                 val = line.strip()
                 configList.append(val[val.find('= ')+len('= '):])
                 line = fp.readline()
+        return configList
     except:
-        print("ERROR: Couldn't find config.txt file. Please make sure it is in the same directory as the script")
+        print("ERROR: Couldn't find file. Please make sure you included the correct paths.")
+
 
 # A function for making a matrix of zeroes
 def zeros(rows, cols):
@@ -46,11 +106,11 @@ def zeros(rows, cols):
 # A function for determining the score between any two bases in alignment
 def match_score(alpha, beta):
     if alpha == beta:
-        return match_award
+        return MATCH
     elif alpha == '-' or beta == '-':
-        return gap_penalty
+        return GAP_PENALTY
     else:
-        return mismatch_penalty
+        return MISMATCH
 
 
 def needleman_wunsch(seq1, seq2):
@@ -60,16 +120,16 @@ def needleman_wunsch(seq1, seq2):
     score = zeros(m + 1, n + 1)
 
     for i in range(0, m + 1):
-        score[i][0] = gap_penalty * i
+        score[i][0] = GAP_PENALTY * i
 
     for j in range(0, n + 1):
-        score[0][j] = gap_penalty * j
+        score[0][j] = GAP_PENALTY * j
 
     for i in range(1, m + 1):
         for j in range(1, n + 1):
             match = score[i - 1][j - 1] + match_score(seq1[j - 1], seq2[i - 1])
-            delete = score[i - 1][j] + gap_penalty
-            insert = score[i][j - 1] + gap_penalty
+            delete = score[i - 1][j] + GAP_PENALTY
+            insert = score[i][j - 1] + GAP_PENALTY
 
             score[i][j] = max(match, delete, insert)
 
@@ -85,7 +145,11 @@ def needleman_wunsch(seq1, seq2):
     for i in range(len(listOfAlignmentsSeq1)):
         finalList.append((''.join(listOfAlignmentsSeq1[i]), ''.join(listOfAlignmentsSeq2[i])))
 
-    print(finalList)
+    try:
+        assert MAX_PATHS > len(finalList)
+    except:
+        print("ERROR: MAX_PATHS in config.txt is smaller than actual value.")
+
     return finalList
 
 
@@ -107,14 +171,14 @@ def recursionAlignment(seq1, seq2, i, j, score):
             seq1List.pop()
             seq2List.pop()
 
-        if score_current == score_up + gap_penalty:
+        if score_current == score_up + GAP_PENALTY:
             seq1List.append(seq1[j - 1])
             seq2List.append('-')
             recursionAlignment(seq1, seq2, i, j-1, score)
             seq1List.pop()
             seq2List.pop()
 
-        if score_current == score_left + gap_penalty:
+        if score_current == score_left + GAP_PENALTY:
             seq1List.append('-')
             seq2List.append(seq2[i - 1])
             recursionAlignment(seq1, seq2, i-1, j, score)
@@ -122,6 +186,4 @@ def recursionAlignment(seq1, seq2, i, j, score):
             seq2List.pop()
 
 InitScript()
-needleman_wunsch(seq1, seq2)
-
 # print(output1 + "\n" + output2)
