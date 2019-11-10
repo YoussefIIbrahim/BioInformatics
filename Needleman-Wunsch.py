@@ -12,6 +12,20 @@ listOfAlignmentsSeq1 = []
 listOfAlignmentsSeq2 = []
 
 finalList = []
+configList = []
+
+
+def InitScript():
+    try:
+        filepath = 'config.txt'
+        with open(filepath) as fp:
+            line = fp.readline()
+            while line:
+                val = line.strip()
+                configList.append(val[val.find('= ')+len('= '):])
+                line = fp.readline()
+    except:
+        print("ERROR: Couldn't find config.txt file. Please make sure it is in the same directory as the script")
 
 # A function for making a matrix of zeroes
 def zeros(rows, cols):
@@ -107,7 +121,7 @@ def recursionAlignment(seq1, seq2, i, j, score):
             seq1List.pop()
             seq2List.pop()
 
-
+InitScript()
 needleman_wunsch(seq1, seq2)
 
 # print(output1 + "\n" + output2)
