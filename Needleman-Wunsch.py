@@ -54,23 +54,25 @@ def InitScript():
     sequence2 = args['cpath']
 
     GAP_PENALTY, MATCH, MISMATCH, MAX_PATHS, MAX_SEQ = readFile(str(filePath))
+
     GAP_PENALTY = int(GAP_PENALTY)
     MATCH = int(MATCH)
     MISMATCH = int(MISMATCH)
     MAX_PATHS = int(MAX_PATHS)
     MAX_SEQ = int(MAX_SEQ)
+
     SEQ1 = readFile(str(sequence1))[0]
     SEQ2 = readFile(str(sequence2))[0]
 
-    print(SEQ1)
-    print(len(SEQ1) < MAX_SEQ)
-
     try:
-        assert len(SEQ1) < MAX_SEQ
+        assert len(SEQ1) <= MAX_SEQ and len(SEQ2) <= MAX_SEQ
     except:
         print("ERROR: MAX_SEQ in config.txt is smaller than actual sequences.")
 
-    print(needleman_wunsch(SEQ1, SEQ2))
+    output = needleman_wunsch(SEQ1, SEQ2, GAP_PENALTY, MATCH, MISMATCH, MAX_PATHS)
+    print("File 'output.txt' is saved and the content is: \n" , output)
+    with open("output.txt", 'w') as f:
+        f.write("\n".join(map(str, output)))
 
 
 def readFile(path):
@@ -104,7 +106,7 @@ def zeros(rows, cols):
 
 
 # A function for determining the score between any two bases in alignment
-def match_score(alpha, beta):
+def match_score(alpha, beta, GAP_PENALTY, MATCH, MISMATCH):
     if alpha == beta:
         return MATCH
     elif alpha == '-' or beta == '-':
@@ -113,7 +115,7 @@ def match_score(alpha, beta):
         return MISMATCH
 
 
-def needleman_wunsch(seq1, seq2):
+def needleman_wunsch(seq1, seq2, GAP_PENALTY, MATCH, MISMATCH, MAX_PATHS):
     n = len(seq1)
     m = len(seq2)
 
@@ -127,7 +129,7 @@ def needleman_wunsch(seq1, seq2):
 
     for i in range(1, m + 1):
         for j in range(1, n + 1):
-            match = score[i - 1][j - 1] + match_score(seq1[j - 1], seq2[i - 1])
+            match = score[i - 1][j - 1] + match_score(seq1[j - 1], seq2[i - 1], GAP_PENALTY, MATCH, MISMATCH)
             delete = score[i - 1][j] + GAP_PENALTY
             insert = score[i][j - 1] + GAP_PENALTY
 
@@ -136,7 +138,7 @@ def needleman_wunsch(seq1, seq2):
     i = m
     j = n
 
-    recursionAlignment(seq1, seq2, i, j, score)
+    recursionAlignment(seq1, seq2, i, j, score, GAP_PENALTY, MATCH, MISMATCH)
 
     for i in range(len(listOfAlignmentsSeq1)):
         listOfAlignmentsSeq1[i].reverse()
@@ -146,14 +148,15 @@ def needleman_wunsch(seq1, seq2):
         finalList.append((''.join(listOfAlignmentsSeq1[i]), ''.join(listOfAlignmentsSeq2[i])))
 
     try:
-        assert MAX_PATHS > len(finalList)
+        assert MAX_PATHS >= len(finalList)
     except:
         print("ERROR: MAX_PATHS in config.txt is smaller than actual value.")
+        return
 
     return finalList
 
 
-def recursionAlignment(seq1, seq2, i, j, score):
+def recursionAlignment(seq1, seq2, i, j, score, GAP_PENALTY, MATCH, MISMATCH):
 
     if not(i > 0 and j > 0):
         listOfAlignmentsSeq1.append(seq1List[:])
@@ -164,24 +167,24 @@ def recursionAlignment(seq1, seq2, i, j, score):
         score_up = score[i][j - 1]
         score_left = score[i - 1][j]
 
-        if score_current == score_diagonal + match_score(seq1[j - 1], seq2[i - 1]):
+        if score_current == score_diagonal + match_score(seq1[j - 1], seq2[i - 1], GAP_PENALTY, MATCH, MISMATCH):
             seq1List.append(seq1[j - 1])
             seq2List.append(seq2[i - 1])
-            recursionAlignment(seq1, seq2, i-1, j-1, score)
+            recursionAlignment(seq1, seq2, i-1, j-1, score, GAP_PENALTY, MATCH, MISMATCH)
             seq1List.pop()
             seq2List.pop()
 
         if score_current == score_up + GAP_PENALTY:
             seq1List.append(seq1[j - 1])
             seq2List.append('-')
-            recursionAlignment(seq1, seq2, i, j-1, score)
+            recursionAlignment(seq1, seq2, i, j-1, score, GAP_PENALTY, MATCH, MISMATCH)
             seq1List.pop()
             seq2List.pop()
 
         if score_current == score_left + GAP_PENALTY:
             seq1List.append('-')
             seq2List.append(seq2[i - 1])
-            recursionAlignment(seq1, seq2, i-1, j, score)
+            recursionAlignment(seq1, seq2, i-1, j, score, GAP_PENALTY, MATCH, MISMATCH)
             seq1List.pop()
             seq2List.pop()
 
