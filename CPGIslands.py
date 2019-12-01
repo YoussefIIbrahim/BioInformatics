@@ -1,8 +1,12 @@
+import sys
 import pandas as pd
-import spans
-import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
+from tqdm import tqdm
 import matplotlib.pyplot as plt
+
+
+def parse_chromosome(pandas_series):
+    return pandas_series.apply(lambda x: int(x[3:]))
 
 #%% definitions
 LOCATION_KEY = 'location'
