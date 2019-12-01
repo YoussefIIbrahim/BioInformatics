@@ -32,7 +32,7 @@ def constructCoordinatesBed(data, window=2000):
     shelves = []
     seas = []
 
-    prevChrom = data.iloc['chromosome']
+    prevChrom = data.iloc[0]['chromosome']
     prevStart = data.iloc[0]['start']
     prevStop = data.iloc[0]['stop']
     prevChromLen = data.iloc[0]['length']
@@ -177,7 +177,7 @@ chromosomes_lengths['chromosome'] = parseChromosome(chromosomes_lengths['chromos
 data = cpg_islands.merge(chromosomes_lengths)
 
 dna_methylation = []
-with open("data.bed")as f:
+with open("hg38_CpG-Island.bed")as f:
     for line in f:
         row = line.strip().split()
         if row[0] in chromosomes:
@@ -194,122 +194,10 @@ saveBedFormat('seas', seas)
 
 regions = calculate_hits(cpg_islands, shores, shelves, seas, dna_methylation)
 hits = pd.Series(regions).value_counts(normalize=True)
-fig, ax = plt.subplots()
-plt.bar(['sea','cpg island','shore','shelve'],hits)
-plt.title('DNA Methylation hits per region')
-plt.ylabel('Percentage of hits')
-plt.xlabel('Region')
-plt.show()
-np.sum(pd.Series(regions).value_counts())
-
-
-
-
-#
-# #%% find islands, shores, shelves and seas: function definitions
-#
-# def add_to_interval(interval, start, stop, dilation, chrom_borders):
-#     interval.add(spans.intrange(start - dilation, stop + dilation).intersection(chrom_borders))
-#
-# def intervals_for_chrom(islands_chrom_df, chrom_len):
-#     shore_limit = 2000
-#     shelf_limit = shore_limit + 2000
-#     chrom_interval = spans.intrange(0, chrom_len)
-#     intervals = {SEA_KEY: spans.intrangeset([chrom_interval]), SHELF_KEY: spans.intrangeset([]),
-#                  SHORE_KEY: spans.intrangeset([]), ISLAND_KEY: spans.intrangeset([])}
-#     for _, island in islands_chrom_df.iterrows():
-#         add_to_interval(intervals[ISLAND_KEY], island[START_KEY], island[STOP_KEY], 0, chrom_interval)
-#         add_to_interval(intervals[SHORE_KEY], island[START_KEY], island[STOP_KEY], shore_limit, chrom_interval)
-#         add_to_interval(intervals[SHELF_KEY], island[START_KEY], island[STOP_KEY], shelf_limit, chrom_interval)
-#     intervals[SEA_KEY] = intervals[SEA_KEY].difference(intervals[SHELF_KEY])
-#     intervals[SHELF_KEY] = intervals[SHELF_KEY].difference(intervals[SHORE_KEY])
-#     intervals[SHORE_KEY] = intervals[SHORE_KEY].difference(intervals[ISLAND_KEY])
-#     return intervals
-#
-#
-# def df_from_interval(interval, chrom):
-#     fragments_list =[]
-#     for subinterval in interval:
-#         fragments_list.append((chrom, subinterval.lower, subinterval.upper))
-#     df = pd.DataFrame(fragments_list)
-#     return df
-#
-# #%% find islands, shores, shelves and seas
-#
-#
-# region_chrom_dfs = {ISLAND_KEY: [], SHORE_KEY: [], SHELF_KEY: [], SEA_KEY: []}
-# chrom_interval_dict = {}
-# for chrom in autosomal_chrom:
-#     islands_chrom_df = islands_df[islands_df[CHROM_KEY] == chrom]
-#     intervals = intervals_for_chrom(islands_chrom_df, lengths[chrom])
-#     for key in intervals:
-#         region_chrom_dfs[key].append(df_from_interval(intervals[key], chrom))
-#     chrom_interval_dict[chrom] = intervals
-#
-# region_dfs = {}
-# for region in region_chrom_dfs:
-#     region_dfs[region] = pd.concat(region_chrom_dfs[region])
-#
-# #%% save results to files
-# for region in region_dfs:
-#     region_dfs[region].to_csv(f'{region}.bed', sep='\t', header=False, index=False)
-#
-# #%% calculate methylations positions on chromosomes
-# methyalation_df[POS_KEY] = (methyalation_df[STOP_KEY] - methyalation_df[START_KEY]) / 2 + methyalation_df[START_KEY]
-# methyalation_df[POS_KEY] = methyalation_df[POS_KEY].apply(lambda x: int(x))
-#
-# #%% calculate methylations locations in islands/shores/shelves/seas
-# def detemine_methylation_location(chrom, pos, chrom_interval_dict):
-#     intervals = chrom_interval_dict[chrom]
-#     for region in intervals:
-#         if intervals[region].contains(pos):
-#             return region
-#     raise LookupError(f'There is no position {str(pos)} in chromosome {chrom}.')
-#
-#
-# methyalation_df[LOCATION_KEY] = methyalation_df.apply(
-#     lambda row: detemine_methylation_location(row[CHROM_KEY], row[POS_KEY], chrom_interval_dict), axis=1)
-#
-# #%% collect statistics about methylations locations
-#
-# def count_methylations_in_area(methyalation_df, area):
-#     return sum(methyalation_df[LOCATION_KEY] == area)
-#
-#
-# areas = (ISLAND_KEY, SHORE_KEY, SHELF_KEY, SEA_KEY)
-# count = []
-# for area in areas:
-#     count.append(count_methylations_in_area(methyalation_df, area))
-#
-# #%% plot results
-#
-# def autolabel(rects):
-#     """Attach a text label above each bar in *rects*, displaying its height."""
-#     for rect in rects:
-#         height = rect.get_height()
-#         ax.annotate('{}'.format(height),
-#                     xy=(rect.get_x() + rect.get_width() / 2, height),
-#                     xytext=(0, 3),  # 3 points vertical offset
-#                     textcoords="offset points",
-#                     ha='center', va='bottom')
-#
-#
-# x = np.arange(len(areas))  # the label locations
-# width = 0.6  # the width of the bars
-#
 # fig, ax = plt.subplots()
-# rects = ax.bar(x, count, width)
-#
-# # Add some text for labels, title and custom x-axis tick labels, etc.
-# ax.set_ylabel('Number of methylations')
-# ax.set_title('Number of methylations in each area')
-# ax.set_xticks(x)
-# ax.set_xticklabels(areas)
-# # ax.legend()
-#
-# autolabel(rects)
-#
-# fig.tight_layout()
-#
+# plt.bar(['sea','cpg island','shore','shelve'],hits)
+# plt.title('DNA Methylation hits per region')
+# plt.ylabel('Percentage of hits')
+# plt.xlabel('Region')
 # plt.show()
-#
+np.sum(pd.Series(regions).value_counts())
