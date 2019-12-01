@@ -1,7 +1,7 @@
 import sys
 import getopt
 import argparse
-from Bio import SeqIO
+# from Bio import SeqIO
 
 GAP_PENALTY = -1
 MATCH = 1
@@ -57,10 +57,10 @@ def main():
     MAX_PATHS = int(MAX_PATHS)
     MAX_SEQ = int(MAX_SEQ)
 
-    # SEQ1 = readFile(str(sequence1), 0)[0]
-    # SEQ2 = readFile(str(sequence2), 0)[0]
-    SEQ1 = SeqIO.read(sequence1, "fasta")
-    SEQ2 = SeqIO.read(sequence2, "fasta")
+    SEQ1 = readFile(str(sequence1), 0)[0]
+    SEQ2 = readFile(str(sequence2), 0)[0]
+    # SEQ1 = SeqIO.read(sequence1, "fasta")
+    # SEQ2 = SeqIO.read(sequence2, "fasta")
     try:
         assert len(SEQ1) <= MAX_SEQ and len(SEQ2) <= MAX_SEQ
     except:
@@ -185,3 +185,4 @@ def recursionAlignment(seq1, seq2, i, j, score, GAP_PENALTY, MATCH, MISMATCH):
             seq2List.pop()
 
 main()
+#

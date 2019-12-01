@@ -1,10 +1,6 @@
-import sys
-
-import io
-import unittest
-import unittest.mock
 from unittest import TestCase
-import NeedlemanWunschAlgorithm as nw
+from NeedlemanWunsch import NeedlemanWunschAlgorithm as nw
+
 
 class TestNeedlemanWunsch(TestCase):
 
