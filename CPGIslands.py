@@ -21,26 +21,35 @@ ISLAND_KEY = 'island'
 
 
 #%% read files
-islands_df = pd.read_csv('cpgIslandExt.txt', sep='\t', usecols=[1, 2, 3], header=None)
-islands_df.columns=[CHROM_KEY, START_KEY, STOP_KEY]
-lengths_df = pd.read_csv('hg19.chrom.sizes.txt', sep='\t', index_col=0, header=None, squeeze=True)
-lengths = lengths_df.to_dict()
-methyalation_df = pd.read_csv('data.bed', sep='\t', usecols=[0, 1, 2], header=None)
-methyalation_df.columns=[CHROM_KEY, START_KEY, STOP_KEY]
+# islands_df = pd.read_csv('cpgIslandExt.txt', sep='\t', usecols=[1, 2, 3], header=None)
+# islands_df.columns=[CHROM_KEY, START_KEY, STOP_KEY]
+# lengths_df = pd.read_csv('hg19.chrom.sizes.txt', sep='\t', index_col=0, header=None, squeeze=True)
+# lengths = lengths_df.to_dict()
+# methyalation_df = pd.read_csv('data.bed', sep='\t', usecols=[0, 1, 2], header=None)
+# methyalation_df.columns=[CHROM_KEY, START_KEY, STOP_KEY]
 
-#%% filter inputs
-autosomal_chrom = set()
-for i in range(22):
-    autosomal_chrom.add('chr' + str(i + 1))
+cpg_islands = pd.read_csv('cpgIslandExt.txt', sep = '\t', header = None).iloc[:,1:4]
+cpg_islands = cpg_islands.rename(columns = {1:'chromosome',2:'start',3:'stop'})
+chromosomes = ['chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10','chr11','chr12','chr13','chr14',
+               'chr15','chr16','chr17','chr18','chr19','chr20','chr21','chr22']
+cpg_islands = cpg_islands[cpg_islands['chromosome'].isin(chromosomes)]
+cpg_islands['chromosome'] = parse_chromosome(cpg_islands['chromosome'])
+cpg_islands = cpg_islands.sort_values(['chromosome', 'start'])
 
+chromosomes_lengths = pd.read_csv('hg19.chrom.sizes.txt', sep = '\t', header = None, names = ['chromosome','length'])
+chromosomes_lengths = chromosomes_lengths[chromosomes_lengths['chromosome'].isin(chromosomes)]
+chromosomes_lengths['chromosome'] = parse_chromosome(chromosomes_lengths['chromosome'])
+data = cpg_islands.merge(chromosomes_lengths)
 
-def filter_autosomal(df, autosomal_chrom):
-    return df[df[CHROM_KEY].isin(autosomal_chrom)]
-
-
-islands_df = filter_autosomal(islands_df, autosomal_chrom)
-# lengths_df = filter_autosomal(lengths_df, autosomal_chrom)
-methyalation_df = filter_autosomal(methyalation_df, autosomal_chrom)
+dna_methylation = []
+with open("data.bed")as f:
+    for line in f:
+        row = line.strip().split()
+        if row[0] in chromosomes:
+            chromosome = int(row[0][3:])
+            start = int(row[1])
+            stop = int(row[2])
+            dna_methylation.append((chromosome, start, stop))
 
 #%% find islands, shores, shelves and seas: function definitions
 
